@@ -10,6 +10,11 @@ use regex::RegexBuilder;
 fn main() -> Result<(), anyhow::Error> {
     let mut cli = RegexCommand::parse();
 
+    cli.debug_fn(|cli| {
+        println!("Raw pattern: {}", &cli.pattern);
+        println!("Raw haystack: {}", cli.haystack.as_ref().unwrap_or(&"<none provided>".to_string()))
+    });
+
     // A very easy way to skip unnecessary computation.
     if Some(&cli.pattern) == cli.haystack.as_ref() {
         cli.debug("Pattern and haystack are equivalent. Exiting.");
@@ -20,16 +25,17 @@ fn main() -> Result<(), anyhow::Error> {
         cli.debug("Taking pattern from standard input.");
         let mut buffer = vec![];
         stdin().lock().read_to_end(&mut buffer)?;
-        cli.pattern = String::from_utf8(buffer)?;
-    }
-
-    if (cli.pattern != "-" && !stdin().is_terminal()) || cli.haystack == Some("-".to_string()) {
-        cli.debug("Taking haystack from standard input.");
-        let mut buffer = vec![];
-        stdin().lock().read_to_end(&mut buffer)?;
-        cli.haystack = Some(String::from_utf8(buffer)?);
-    } else {
         cli.debug("Haystack is provided by argument.");
+        cli.pattern = String::from_utf8(buffer)?;
+    } else {
+        if cli.pattern != "-" && (!stdin().is_terminal() || cli.haystack == Some("-".to_string())) {
+            cli.debug("Taking haystack from standard input.");
+            let mut buffer = vec![];
+            stdin().lock().read_to_end(&mut buffer)?;
+            cli.haystack = Some(String::from_utf8(buffer)?);
+        } else {
+            cli.debug("Haystack is provided by argument.");
+        }
     }
 
     if cli.haystack == Some("".to_string()) || cli.haystack == None {
@@ -82,9 +88,11 @@ fn main() -> Result<(), anyhow::Error> {
 
     let regex = regex.build()?;
 
-    if regex.replace_all(&cli.haystack.unwrap(), "").to_owned() != "" {
+    if regex.replace_all(cli.haystack.as_ref().unwrap(), "").to_owned() != "" {
+        cli.debug("Haystack does not match the specified pattern.");
         std::process::exit(1);
     }
 
+    cli.debug("Haystack matches the specified pattern.");
     Ok(())
 }
