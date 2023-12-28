@@ -2,6 +2,13 @@
 name = "regex-cli-test"
 version = "0.1.0"
 edition = "2021"
+description = "A command line tool for testing against regex patterns."
+license = "MIT"
+keywords = ["regex", "cli"]
+categories = ["command-line-utilities", "text-processing"]
+readme = "readme.md"
+repository = "https://github.com/Proxxa/regex-cli"
+homepage = "https://github.com/Proxxa/regex-cli"
 
 # Designate binary name
 [[bin]]
